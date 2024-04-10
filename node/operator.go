@@ -3,7 +3,8 @@ package node
 import (
 	"context"
 	"crypto/ecdsa"
-	"errors"
+	"encoding/hex"
+	//"errors"
 	"fmt"
 	"math/big"
 	"slices"
@@ -27,10 +28,37 @@ type Operator struct {
 
 // RegisterOperator operator registers the operator with the given public key for the given quorum IDs.
 func RegisterOperator(ctx context.Context, operator *Operator, transactor core.Transactor, churnerClient ChurnerClient, logger logging.Logger) error {
+
+	//
+	hexStr := "b141a7cc71246834ca6dcd286b47b6a868151801ad0c7f6f2ce85d03b9d83275"
+	bytes, err := hex.DecodeString(hexStr)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	eigenlayerOperator := Operator{
+		Address:             "0x33503F021B5f1C00bA842cEd26B44ca2FAB157Bd",
+		OperatorId:          core.OperatorID(bytes),
+		RegisterNodeAtStart: true,
+		QuorumIDs:           operator.QuorumIDs,
+	}
+
+	_ = eigenlayerOperator
+	//
+
+	fmt.Printf("operator %+v\n", eigenlayerOperator)
+	fmt.Printf("operator %+v\n", eigenlayerOperator.QuorumIDs)
+
 	if len(operator.QuorumIDs) > 1+core.MaxQuorumID {
 		return fmt.Errorf("cannot provide more than %d quorums", 1+core.MaxQuorumID)
 	}
+
+	fmt.Println("eigen", eigenlayerOperator.Address)
+	fmt.Println("dsrv", operator.Address)
+
+	/*
 	quorumsToRegister, err := operator.getQuorumIdsToRegister(ctx, transactor)
+	fmt.Printf("quromsToRegister %+v\n", quorumsToRegister)
 	if err != nil {
 		return fmt.Errorf("failed to get quorum ids to register: %w", err)
 	}
@@ -40,15 +68,18 @@ func RegisterOperator(ctx context.Context, operator *Operator, transactor core.T
 			return errors.New("quorums to register must be not registered yet")
 		}
 	}
+
 	if len(quorumsToRegister) == 0 {
 		return nil
 	}
 
 	logger.Info("Quorums to register for", "quorums", quorumsToRegister)
+	*/
 
 	// register for quorums
 	shouldCallChurner := false
 	// check if one of the quorums to register for is full
+	quorumsToRegister := []core.QuorumID{0}
 	for _, quorumID := range quorumsToRegister {
 		operatorSetParams, err := transactor.GetOperatorSetParams(ctx, quorumID)
 		if err != nil {
@@ -76,9 +107,11 @@ func RegisterOperator(ctx context.Context, operator *Operator, transactor core.T
 	copy(salt[:], crypto.Keccak256([]byte("churn"), []byte(time.Now().String()), quorumsToRegister, privateKeyBytes))
 
 	// Get the current block number
-	expiry := big.NewInt((time.Now().Add(10 * time.Minute)).Unix())
+	//expiry := big.NewInt((time.Now().Add(10 * time.Minute)).Unix())
+	expiry := big.NewInt((time.Now().Add(24 * 365 * time.Hour)).Unix())
 
 	// if we should call the churner, call it
+	shouldCallChurner = false
 	if shouldCallChurner {
 		churnReply, err := churnerClient.Churn(ctx, operator.Address, operator.KeyPair, quorumsToRegister)
 		if err != nil {

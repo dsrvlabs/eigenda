@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"fmt"
 
 	"github.com/Layr-Labs/eigenda/common"
 	"github.com/Layr-Labs/eigenda/common/geth"
@@ -128,6 +129,9 @@ func pluginOps(ctx *cli.Context) {
 		RegisterNodeAtStart: false,
 	}
 	churnerClient := node.NewChurnerClient(config.ChurnerUrl, true, operator.Timeout, logger)
+
+	fmt.Println("***** DSRV")
+
 	if config.Operation == "opt-in" {
 		log.Printf("Info: Operator with Operator Address: %x is opting in to EigenDA", sk.Address)
 		err = node.RegisterOperator(context.Background(), operator, tx, churnerClient, logger.With("component", "NodeOperator"))

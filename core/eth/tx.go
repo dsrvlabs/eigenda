@@ -194,6 +194,18 @@ func (t *Transactor) RegisterOperator(
 		return err
 	}
 
+	fmt.Println("===== params")
+
+	fmt.Printf("params.pubkeyRegistrationSignature: %+v,%+v\n", params.PubkeyRegistrationSignature.X.String(), params.PubkeyRegistrationSignature.Y.String())
+	fmt.Printf("params.pubkeyG1: %+v,%+v\n", params.PubkeyG1.X.String(), params.PubkeyG1.Y.String())
+	fmt.Printf("params.pubkeyG2: %+v,%+v,%+v,%+v\n", params.PubkeyG2.X[0].String(), params.PubkeyG2.X[1].String(), params.PubkeyG2.Y[0].String(), params.PubkeyG2.Y[1].String())
+
+
+	fmt.Println("===== OperatorSignature")
+	fmt.Println("signature", hex.EncodeToString(operatorSignature.Signature))
+	fmt.Println("salt", hex.EncodeToString(operatorSignature.Salt[:]))
+	fmt.Println("expiry", operatorSignature.Expiry.String())
+
 	quorumNumbers := quorumIDsToQuorumNumbers(quorumIds)
 	opts, err := t.EthClient.GetNoSendTransactOpts()
 	if err != nil {
@@ -256,6 +268,8 @@ func (t *Transactor) RegisterOperatorWithChurn(
 		Salt:      salt,
 		Expiry:    new(big.Int).SetInt64(churnReply.SignatureWithSaltAndExpiry.Expiry),
 	}
+
+	fmt.Printf("*** DSRV %+v\n", churnReply.SignatureWithSaltAndExpiry)
 
 	opts, err := t.EthClient.GetNoSendTransactOpts()
 	if err != nil {
